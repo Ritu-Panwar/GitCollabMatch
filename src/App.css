@@ -36,3 +36,30 @@
     transform: rotate(360deg);
   }
 }
+
+body{
+  background-color: #D3D9D4;
+  overflow-x: hidden;
+}
+
+main{
+  padding: 5px !important;
+}
+
+.list-group-item{
+  border-radius: 10px;
+  text-align: center;
+  padding: 0%;
+}
+
+i{
+  color: white;
+}
+
+.no-hover:hover {
+  background-color: white !important;
+  color: black !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+}

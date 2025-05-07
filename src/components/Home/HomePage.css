@@ -1,0 +1,15 @@
+.hover-effect {
+    transition: all 0.3s ease;
+  }
+  .hover-effect:hover {
+    transform: translateY(-3px);
+    opacity: 0.95;
+  }
+  
+  .card {
+    transition: transform 0.3s ease;
+  }
+  .card:hover {
+    transform: translateY(-5px);
+  }
+  

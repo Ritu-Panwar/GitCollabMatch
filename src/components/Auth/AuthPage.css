@@ -1,0 +1,17 @@
+.auth-bg {
+    height: 98vh;
+    padding-top: 70px;
+  }
+  
+  .auth-card {
+    background: white;
+    transition: all 0.3s ease;
+    border-radius: 1.5rem !important;
+  }
+  
+  .auth-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  

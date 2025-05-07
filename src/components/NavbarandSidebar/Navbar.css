@@ -1,0 +1,16 @@
+.navcss{
+    background-color: #212A31;
+    justify-content: center;
+}
+
+.navbar-brand{
+    color: #fff;
+    font-size: 1.5rem; /* optional: adjust text size */
+    margin: 0px 30em;
+    user-select: none;
+}
+
+.navbar-brand:hover{
+    color: #fff;
+    text-decoration: none; /* optional: remove underline on hover */
+}

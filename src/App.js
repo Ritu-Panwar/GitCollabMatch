@@ -1,24 +1,37 @@
-import logo from './logo.svg';
 import './App.css';
+import Aboutpage from './components/front/Aboutpage';
+import HomePage from './components/Home/HomePage';
+import Layout from './components/front/Layout';
+import MatchingPage from './components/match/MatchingPage';
+import React from 'react';
+
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route
+} from "react-router-dom";
+import AuthPage from './components/Auth/AuthPage';
+import ContactPage from './components/front/ContactPage';
+import Navbar from './components/NavbarandSidebar/Navbar';
+import CommitPage from './components/commit/CommitPage';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Navbar />
+      <Layout>
+      <div className="container" style={{ maxWidth: '1590px', padding: '0', margin: '0' }}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<Aboutpage />} />
+          <Route path='/auth' element={<AuthPage/>} />
+          <Route path="/match" element={<MatchingPage />} />
+          <Route path="/commit" element={<CommitPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+        </Routes>
+      </div>
+      </Layout>
+    </Router>
   );
 }
 
