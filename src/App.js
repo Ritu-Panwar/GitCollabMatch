@@ -1,19 +1,19 @@
+import React from 'react';
 import './App.css';
 import Aboutpage from './components/front/Aboutpage';
 import HomePage from './components/Home/HomePage';
 import Layout from './components/front/Layout';
 import MatchingPage from './components/match/MatchingPage';
-import React from 'react';
+import AuthPage from './components/Auth/AuthPage';
+import ContactPage from './components/front/ContactPage';
+import Navbar from './components/NavbarandSidebar/Navbar';
+import CommitPage from './components/commit/CommitPage';
 
 import {
   BrowserRouter as Router,
   Routes,
   Route
 } from "react-router-dom";
-import AuthPage from './components/Auth/AuthPage';
-import ContactPage from './components/front/ContactPage';
-import Navbar from './components/NavbarandSidebar/Navbar';
-import CommitPage from './components/commit/CommitPage';
 
 function App() {
   return (
