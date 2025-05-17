@@ -4,117 +4,82 @@ const FileEditor = () => {
   const [content, setContent] = useState("");
   const [sha, setSha] = useState("");
   const [status, setStatus] = useState("");
-  const [commitUrl, setCommitUrl] = useState("");
-  const [loading, setLoading] = useState(true);
 
   const token = sessionStorage.getItem("github_token");
   const repo = sessionStorage.getItem("repo");
   const filePath = sessionStorage.getItem("file_path");
 
+  const [owner, repoName] = repo.split("/");
+
+  const apiUrl = `https://api.github.com/repos/${owner}/${repoName}/contents/${filePath}`;
+
   useEffect(() => {
     const fetchFile = async () => {
+      setStatus("Fetching file...");
       try {
-        const response = await fetch(
-          `https://api.github.com/repos/${repo}/contents/${filePath}`,
-          {
-            headers: {
-              Authorization: `token ${token}`,
-              Accept: "application/vnd.github.v3+json",
-            },
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch file.");
-        }
-        const data = await response.json();
-        const contentDecoded = atob(data.content);
-        setContent(contentDecoded);
+        const res = await fetch(apiUrl, {
+          headers: {
+            Authorization: `token ${token}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        });
+
+        if (!res.ok) throw new Error("File not found or access denied");
+
+        const data = await res.json();
+        setContent(atob(data.content));
         setSha(data.sha);
-        setLoading(false);
+        setStatus("File loaded successfully");
       } catch (error) {
-        setStatus(`❌ Error: ${error.message}`);
-        setLoading(false);
+        setStatus(`Error: ${error.message}`);
       }
     };
 
     fetchFile();
-  }, [repo, filePath, token]);
+  }, [apiUrl, token]);
 
-  const handleCommit = async () => {
-    const encodedContent = btoa(unescape(encodeURIComponent(content)));
+  const handleSave = async () => {
+    setStatus("Saving...");
     try {
-      setStatus("⏳ Committing changes to GitHub...");
-      const response = await fetch(
-        `https://api.github.com/repos/${repo}/contents/${filePath}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `token ${token}`,
-            Accept: "application/vnd.github.v3+json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: "File updated via React App",
-            content: encodedContent,
-            sha: sha,
-          }),
-        }
-      );
+      const res = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          Authorization: `token ${token}`,
+          Accept: "application/vnd.github.v3+json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: "Updated via web editor",
+          content: btoa(content),
+          sha: sha,
+        }),
+      });
 
-      if (!response.ok) {
-        throw new Error("Failed to commit changes.");
-      }
+      if (!res.ok) throw new Error("Failed to update file");
 
-      const data = await response.json();
-      const commitLink = data.commit?.html_url || `https://github.com/${repo}/commits`;
-      setCommitUrl(commitLink);
-      setStatus("✅ Changes committed successfully!");
+      const result = await res.json();
+      setSha(result.content.sha);
+      setStatus("✅ File updated successfully!");
     } catch (error) {
-      setStatus(`❌ Commit failed: ${error.message}`);
+      setStatus(`❌ Error: ${error.message}`);
     }
   };
 
-  if (loading) return <p>⏳ Loading file...</p>;
-
   return (
-    <div style={{ padding: "10px", fontFamily: "Arial" }}>
-      <h2>📝 Edit File</h2>
+    <div className="container mt-4">
+      <h3 className="mb-3">📝 GitHub File Editor</h3>
+      <p><strong>Status:</strong> {status}</p>
+
       <textarea
-        rows={17}
-        cols={100}
+        className="form-control"
+        rows="15"
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        style={{
-          fontFamily: "monospace",
-          width: "100%",
-          padding: "10px",
-          borderRadius: "8px",
-          border: "1px solid #ccc",
-        }}
-      />
-      <br /><br />
-      <button className="btn btn-primary rounded-sm"
-        onClick={handleCommit}
-        style={{
-          padding: "10px 20px",
-          color: "#fff",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer",
-          fontSize: "16px",
-          transition: "transform 0.2s ease",
-        }}
-        onMouseOver={(e) => (e.target.style.transform = "scale(1.05)")}
-        onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
-      >
-        🚀 Commit Changes
+      ></textarea>
+
+      <button className="btn btn-success mt-3 w-100" onClick={handleSave}>
+        💾 Save Changes to GitHub
       </button>
-      <p style={{ marginTop: "10px" }}>{status}</p>
-      {commitUrl && (
-        <p>
-          🔗 <a href={commitUrl} target="_blank" rel="noopener noreferrer">View Commit</a>
-        </p>
-      )}
     </div>
   );
 };
