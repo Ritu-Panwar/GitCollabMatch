@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 import requests
-import pandas as pd
 from dotenv import load_dotenv
 
 # Load GitHub Token
@@ -9,7 +8,8 @@ load_dotenv()
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 HEADERS = {"Authorization": f"token {GITHUB_TOKEN}"}
 
-# Function to get user languages
+
+# Get list of languages used by a user
 def get_user_languages(username):
     try:
         url = f"https://api.github.com/users/{username}/repos"
@@ -26,10 +26,64 @@ def get_user_languages(username):
     except requests.exceptions.RequestException:
         return set()
 
-# Fetch mentee skills
+
+# Get public repo stats: stars, repos, languages
+def get_user_stats(username):
+    try:
+        url = f"https://api.github.com/users/{username}/repos"
+        response = requests.get(url, headers=HEADERS, timeout=10)
+        if response.status_code != 200:
+            return 0, 0, set()
+        repos = response.json()
+        stars = 0
+        langs = set()
+        for repo in repos:
+            stars += repo.get("stargazers_count", 0)
+            if repo.get("language"):
+                langs.add(repo["language"])
+        return len(repos), stars, langs
+    except requests.exceptions.RequestException:
+        return 0, 0, set()
+
+
+# Estimate skill level from stats
+def estimate_skill_level(repo_count, stars, lang_count):
+    score = 0
+    if repo_count >= 15:
+        score += 2
+    elif repo_count >= 5:
+        score += 1
+
+    if stars >= 50:
+        score += 2
+    elif stars >= 10:
+        score += 1
+
+    if lang_count > 5:
+        score += 2
+    elif lang_count >= 3:
+        score += 1
+
+    if score >= 5:
+        return "Advanced"
+    elif score >= 3:
+        return "Intermediate"
+    else:
+        return "Beginner"
+
+
+# Fetch mentee profile including languages and skill level
 def fetch_mentee_profile(username):
-    langs = get_user_languages(username)
-    return {"Username": username, "Languages": list(langs)}
+    repo_count, stars, langs = get_user_stats(username)
+    skill_level = estimate_skill_level(repo_count, stars, len(langs))
+    return {
+        "Username": username,
+        "Languages": list(langs),
+        "Skill Level": skill_level,
+        "Repo Count": repo_count,
+        "Stars": stars
+    }
+
 
 # Fetch mentors based on overlapping skills
 def fetch_mentors_by_skills(mentee_languages, max_per_lang=5):
@@ -63,7 +117,8 @@ def fetch_mentors_by_skills(mentee_languages, max_per_lang=5):
     mentor_profiles.sort(key=lambda x: x["Skill Match Count"], reverse=True)
     return mentor_profiles
 
-# --- STYLED STREAMLIT UI ---
+
+# ---------------- UI -------------------
 st.set_page_config(page_title="GitHub Mentor Finder", page_icon="🤝", layout="centered")
 st.markdown("""
     <style>
@@ -101,24 +156,24 @@ st.markdown("""
 st.markdown('<div class="big-title">🤝 GitHub Mentor-Mentee Matcher</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Find mentors on GitHub with matching skills</div>', unsafe_allow_html=True)
 
-# Input
 mentee_username = st.text_input("👤 Enter your GitHub username:")
 
 if mentee_username:
-    with st.spinner("🔍 Fetching your skills..."):
-        mentee_profile = fetch_mentee_profile(mentee_username.strip())
+    with st.spinner("🔍 Fetching your profile and skills..."):
+        profile = fetch_mentee_profile(mentee_username.strip())
 
-    if not mentee_profile["Languages"]:
+    if not profile["Languages"]:
         st.error("⚠️ No skills found for this GitHub profile.")
         st.stop()
 
-    st.success(f"✅ Skills detected for `{mentee_username}`:")
+    st.success(f"✅ Skills detected for `{profile['Username']}`:")
     st.markdown("".join(
-        f"<span class='skill-tag'>{lang}</span>" for lang in mentee_profile["Languages"]
+        f"<span class='skill-tag'>{lang}</span>" for lang in profile["Languages"]
     ), unsafe_allow_html=True)
+    st.info(f"🌟 **Estimated Skill Level:** {profile['Skill Level']}  \n📦 Public Repos: {profile['Repo Count']}  ⭐ Stars: {profile['Stars']}")
 
     with st.spinner("🔎 Searching for top mentors..."):
-        mentors = fetch_mentors_by_skills(mentee_profile["Languages"])
+        mentors = fetch_mentors_by_skills(profile["Languages"])
 
     if not mentors:
         st.warning("❌ No suitable mentors found.")
